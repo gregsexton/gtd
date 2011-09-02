@@ -1,5 +1,5 @@
 (ns gtd.window
-  (:import (javax.swing JDialog JLabel)))
+  (:import (javax.swing JDialog JLabel Box)))
 
 ;intended exports:
   ;create-window
@@ -11,6 +11,7 @@
 (def SCREEN-HEIGHT 1200)
 (def MAX-WIN-WIDTH (- SCREEN-WIDTH 100))
 (def MAX-WIN-HEIGHT (- SCREEN-HEIGHT 100))
+(def MIN-WIN-HEIGHT 100)
 (def MAX-LBL-WIDTH (- MAX-WIN-WIDTH 100))
 (def MAX-LBL-HEIGHT (- MAX-WIN-HEIGHT 100))
 
@@ -70,6 +71,7 @@
   [center? max-height message]
   (let [lbl (JLabel. message (if center? JLabel/CENTER JLabel/LEFT))]
     (.setFont lbl (label-font lbl message max-height))
+    (.setAlignmentX lbl (if center? 0.5 0.0))
     lbl))
 
 (defn max-height
@@ -95,8 +97,15 @@
     (/ (- SCREEN-WIDTH (.getWidth win)) 2)
     (/ (- SCREEN-HEIGHT (.getHeight win)) 2)))
 
-(defn size-window [win]
-  (.setSize win MAX-WIN-WIDTH 400))
+(defn get-win-height [layout-manager]
+  (let [height (.. layout-manager getPreferredSize getHeight)]
+    (cond
+      (< height MIN-WIN-HEIGHT) MIN-WIN-HEIGHT
+      (> height MAX-WIN-HEIGHT) MAX-WIN-HEIGHT
+      :else (+ height 100))))
+
+(defn size-window [win layout-manager]
+    (.setSize win MAX-WIN-WIDTH (get-win-height layout-manager)))
 
 (defn make-visible [win]
   (doto win
@@ -113,11 +122,15 @@
   "Create a default window, add all the labels, resize, center and
   display."
   [labels]
-  (let [win (create-initial-win)]
+  (let [win (create-initial-win)
+        box (Box/createVerticalBox)]
+    (.add win box)
+    (.add box (Box/createVerticalGlue))
     (doseq [lbl labels]
-      (.add win lbl))
+      (.add box lbl)
+      (.add box (Box/createVerticalGlue)))
     (.validate win)
-    (size-window win)
+    (size-window win box)
     (center-window win)
     (make-visible win)))
 
