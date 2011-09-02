@@ -1,4 +1,5 @@
-(ns gtd.window
+(ns window
+  (:use [reflow :only (reflow)])
   (:import
      (javax.swing JDialog JLabel Box)))
 
@@ -23,8 +24,21 @@
 ;utilities
 (defn drop-while-not [f coll]
   (drop-while (complement f) coll))
+
 (defn lines [str-input]
   (seq (.split #"\n" str-input)))
+
+(defn longest-item
+  "Returns the item with longest count in collection coll."
+  [coll]
+  (defn max-count-item [x y]
+    (if (< (count x) (count y)) y x))
+  (reduce #(max-count-item %1 %2) [] coll))
+
+(defn longest-count
+  "Returns the count of the longest collection in coll."
+  [coll]
+  (reduce #(max (count %2) %1) 0 coll))
 
 ;labels
 (defn get-new-lbl-font
@@ -79,7 +93,8 @@
     (get-new-lbl-font lbl (select-font-size sizes))))
 
 (defn create-label
-  "Create a label for the message."
+  "Create a label for the message. Fits the label to the MAX-LBL-WIDTH
+  and other constraints. Does not perform any sort of reflow."
   [center? max-height message]
   (let [lbl (JLabel. message (if center? JLabel/CENTER JLabel/LEFT))]
     (.setFont lbl (label-font lbl message max-height))
@@ -96,13 +111,35 @@
       (> height MAX-FONT-SIZE) MAX-FONT-SIZE
       :else height)))
 
+(defn create-label-seq 
+  "Create a seq of labels, one for each message in coll."
+  [coll center?]
+  (let [msg-cnt (count coll)]
+    (map (partial create-label center? (max-height msg-cnt))
+         coll)))
+
+;TODO: move somewhere.
+(defn lbl-font-size [lbl]
+  (.. lbl getFont getSize))
+
+;TODO: get it to work first!
+;TODO: refactor! use map destructuring? extract functions
+(defn create-label-with-flow
+  "Creates a seq of labels and is allowed to break (reflow) the message
+  as it sees fit."
+  [message]
+  (let [longests (map #(longest-item (reflow message %)) (drop 1 (range)))
+        flows (map #(vector %1 %2) (range) (longests))
+        valid-flows (drop-while #(<= (lbl-font-size (create-label true (max-height (first %)) (second %))) MIN-FONT-SIZE) flows)]
+    (create-label-seq (reflow message (ffirst valid-flows)) true)))
+
 (defn create-labels
-  "Create a label for each message."
-  [messages]
-  (let [msg-cnt (count messages)]
-    (map (partial create-label (= msg-cnt 1)
-                               (max-height msg-cnt))
-         messages)))
+  "Create a label for each message. If only one message center justify
+  labels and allow reflow. Otherwise honour line breaks and left align."
+  [[message & tail :as messages]]
+  (if tail 
+    (create-label-seq messages false)
+    (create-label-with-flow message)))
 
 ;window
 (defn center-window [win]
@@ -115,7 +152,7 @@
     (cond
       (< height MIN-WIN-HEIGHT) MIN-WIN-HEIGHT
       (> height MAX-WIN-HEIGHT) MAX-WIN-HEIGHT
-      :else (+ height 100))))
+      :else (+ height WIN-MARGIN))))
 
 (defn size-window [win layout-manager]
   (.setSize win MAX-WIN-WIDTH (get-win-height layout-manager)))
@@ -154,11 +191,15 @@
   (create-window-with-labels
     (create-labels (lines message))))
 
-;doesn't realise full width;
-(create-window "Hello")
-;honours line breaks and left aligns:
-(create-window "for(int i=0; i<10; i++){\n\ti-=1;\ng++;\ng++;\ng++;\ng++;\ng++;\n}")
-;breaks and justifies:
-(create-window "This is a really long sentence that should wrap and display in a smaller font. This is a really long sentence that should wrap and display in a smaller font.")
-;realises full width but doesn't break:
-(create-window "07590 719599")
+;integration tests
+(defn integration-tests []
+  ;doesn't realise full width;
+  (create-window "Hello") 
+  ;honours line breaks, left aligns and handles tabs:
+  (create-window "for(int i=0; i<10; i++){\n\ti-=1;\n\t\tg++;\n\tg++;\n\t\t\tg++;\ng++;\n\tg++;\n}") 
+  ;breaks and center justifies:
+  (create-window "This is a really long sentence that should wrap and display in a smaller font. This is a really long sentence that should wrap and display in a smaller font.") 
+  ;realises full width but doesn't break:
+  (create-window "07590 719599"))
+
+(integration-tests)
