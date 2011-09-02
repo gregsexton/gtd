@@ -1,5 +1,6 @@
 (ns gtd.window
-  (:import (javax.swing JDialog JLabel Box)))
+  (:import
+     (javax.swing JDialog JLabel Box)))
 
 ;intended exports:
   ;create-window
@@ -9,17 +10,23 @@
 
 (def SCREEN-WIDTH 1600)
 (def SCREEN-HEIGHT 1200)
-(def MAX-WIN-WIDTH (- SCREEN-WIDTH 100))
-(def MAX-WIN-HEIGHT (- SCREEN-HEIGHT 100))
-(def MIN-WIN-HEIGHT 100)
-(def MAX-LBL-WIDTH (- MAX-WIN-WIDTH 100))
-(def MAX-LBL-HEIGHT (- MAX-WIN-HEIGHT 100))
+(def SCREEN-MARGIN 100)
 
+(def MAX-WIN-WIDTH (- SCREEN-WIDTH SCREEN-MARGIN))
+(def MAX-WIN-HEIGHT (- SCREEN-HEIGHT SCREEN-MARGIN))
+(def MIN-WIN-HEIGHT 150)
+(def WIN-MARGIN 100)
+
+(def MAX-LBL-WIDTH (- MAX-WIN-WIDTH WIN-MARGIN))
+(def MAX-LBL-HEIGHT (- MAX-WIN-HEIGHT WIN-MARGIN))
+
+;utilities
 (defn drop-while-not [f coll]
   (drop-while (complement f) coll))
 (defn lines [str-input]
   (seq (.split #"\n" str-input)))
 
+;labels
 (defn get-new-lbl-font
   "Derive a newly sized font from given label's current font."
   [lbl size]
@@ -31,13 +38,18 @@
   (if-let [fm (. lbl (getFontMetrics font))]
     (. fm (stringWidth message))))
 
+(defn string-height-in-label
+  "Pixel height of any string using the font in the label."
+  [lbl font]
+  (.. lbl (getFontMetrics font) getHeight))
+
 (defn next-font-size-delta
   "Generate next font size delta based on constraints."
   [lbl font msg max-height]
   (let [width (string-width-in-label lbl font msg)
-        size (.getSize font)]
+        height (string-height-in-label lbl font)]
     (cond
-      (> size max-height) 0
+      (> height max-height) 0
       (< width MAX-LBL-WIDTH) 5
       (> width MAX-LBL-WIDTH) 0)))
 
@@ -75,8 +87,8 @@
     lbl))
 
 (defn max-height
-  "The maximum height or font size of a label based on number of labels
-  needed and screen height."
+  "The maximum height of a label based on number of labels needed and
+  screen height."
   [cnt]
   (let [height (/ MAX-LBL-HEIGHT cnt)]
     (cond
@@ -92,6 +104,7 @@
                                (max-height msg-cnt))
          messages)))
 
+;window
 (defn center-window [win]
   (.setLocation win
     (/ (- SCREEN-WIDTH (.getWidth win)) 2)
@@ -105,7 +118,7 @@
       :else (+ height 100))))
 
 (defn size-window [win layout-manager]
-    (.setSize win MAX-WIN-WIDTH (get-win-height layout-manager)))
+  (.setSize win MAX-WIN-WIDTH (get-win-height layout-manager)))
 
 (defn make-visible [win]
   (doto win
@@ -123,11 +136,13 @@
   display."
   [labels]
   (let [win (create-initial-win)
-        box (Box/createVerticalBox)]
+        box (Box/createVerticalBox)
+        lbl-count (count labels)]
     (.add win box)
     (.add box (Box/createVerticalGlue))
     (doseq [lbl labels]
       (.add box lbl)
+      (if (> lbl-count 1) (.add box (Box/createHorizontalStrut (/ WIN-MARGIN 2))))
       (.add box (Box/createVerticalGlue)))
     (.validate win)
     (size-window win box)
