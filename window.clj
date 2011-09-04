@@ -2,7 +2,7 @@
   (:use [reflow :only (reflow)])
   (:import
      (javax.swing JDialog JLabel Box)
-     (java.awt Toolkit)))
+     (java.awt Color Toolkit)))
 
 ;intended exports:
   ;create-window
@@ -103,6 +103,7 @@
   [center? max-height message]
   (let [lbl (JLabel. message (if center? JLabel/CENTER JLabel/LEFT))]
     (.setFont lbl (label-font lbl message max-height))
+    (.setForeground lbl (Color. 255 255 255))
     (.setAlignmentX lbl (if center? 0.5 0.0))
     lbl))
 
@@ -170,6 +171,9 @@
   "Create a default window of default size."
   []
   (doto (JDialog.)
+    (.setUndecorated true)
+    (.setAlwaysOnTop true)
+    (.setBackground (Color. 0 81 115 80))
     (.setSize MAX-WIN-WIDTH MAX-WIN-HEIGHT)))
 
 (defn create-window-with-labels
