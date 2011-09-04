@@ -1,7 +1,8 @@
 (ns window
   (:use [reflow :only (reflow)])
   (:import
-     (javax.swing JDialog JLabel Box)))
+     (javax.swing JDialog JLabel Box)
+     (java.awt Toolkit)))
 
 ;intended exports:
   ;create-window
@@ -9,8 +10,8 @@
 (def MIN-FONT-SIZE 20)
 (def MAX-FONT-SIZE 300)
 
-(def SCREEN-WIDTH 1600)
-(def SCREEN-HEIGHT 1200)
+(def SCREEN-WIDTH (.. Toolkit getDefaultToolkit getScreenSize getWidth))
+(def SCREEN-HEIGHT (.. Toolkit getDefaultToolkit getScreenSize getHeight))
 (def SCREEN-MARGIN 100)
 
 (def MAX-WIN-WIDTH (- SCREEN-WIDTH SCREEN-MARGIN))
