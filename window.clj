@@ -41,6 +41,11 @@
   (reduce #(max (count %2) %1) 0 coll))
 
 ;labels
+(defn lbl-font-size 
+  "Get the label's font size."
+  [lbl]
+  (.. lbl getFont getSize))
+
 (defn get-new-lbl-font
   "Derive a newly sized font from given label's current font."
   [lbl size]
@@ -57,19 +62,18 @@
   [lbl font]
   (.. lbl (getFontMetrics font) getHeight))
 
-(defn next-font-size-delta
-  "Generate next font size delta based on constraints."
-  [lbl font msg max-height]
-  (let [width (string-width-in-label lbl font msg)
-        height (string-height-in-label lbl font)]
-    (cond
-      (> height max-height) 0
-      (< width MAX-LBL-WIDTH) 5
-      (> width MAX-LBL-WIDTH) 0)))
-
 (defn next-font-size
-  "Generator function to iterate to font size."
+  "Generator function used to iterate to desired font size."
   [lbl message max-height]
+  (defn next-font-size-delta
+    "Generate next font size delta based on constraints."
+    [lbl font msg max-height]
+    (let [width (string-width-in-label lbl font msg)
+          height (string-height-in-label lbl font)]
+      (cond
+        (> height max-height) 0
+        (< width MAX-LBL-WIDTH) 5
+        (> width MAX-LBL-WIDTH) 0)))
   (fn [last-size]
     (let [font (get-new-lbl-font lbl last-size)
           delta (next-font-size-delta lbl font message max-height)]
@@ -101,7 +105,7 @@
     (.setAlignmentX lbl (if center? 0.5 0.0))
     lbl))
 
-(defn max-height
+(defn lbl-max-height
   "The maximum height of a label based on number of labels needed and
   screen height."
   [cnt]
@@ -111,33 +115,32 @@
       (> height MAX-FONT-SIZE) MAX-FONT-SIZE
       :else height)))
 
-(defn create-label-seq 
+(defn create-label-seq
   "Create a seq of labels, one for each message in coll."
   [coll center?]
   (let [msg-cnt (count coll)]
-    (map (partial create-label center? (max-height msg-cnt))
+    (map (partial create-label center? (lbl-max-height msg-cnt))
          coll)))
 
-;TODO: move somewhere.
-(defn lbl-font-size [lbl]
-  (.. lbl getFont getSize))
-
-;TODO: get it to work first!
-;TODO: refactor! use map destructuring? extract functions
 (defn create-label-with-flow
   "Creates a seq of labels and is allowed to break (reflow) the message
   as it sees fit."
   [message]
-  (let [longests (map #(longest-item (reflow message %)) (drop 1 (range)))
-        flows (map #(vector %1 %2) (range) (longests))
-        valid-flows (drop-while #(<= (lbl-font-size (create-label true (max-height (first %)) (second %))) MIN-FONT-SIZE) flows)]
-    (create-label-seq (reflow message (ffirst valid-flows)) true)))
+  (defn valid-flow [{:keys [breaks longest-msg]}]
+    (> (lbl-font-size
+          (create-label true (lbl-max-height breaks) longest-msg))
+        MIN-FONT-SIZE))
+  (let [breaks-seq  (iterate inc 1)
+        longests    (map #(longest-item (reflow message %)) breaks-seq)
+        flows       (map #(hash-map :breaks %1 :longest-msg %2) breaks-seq longests)
+        valid-flows (drop-while (complement valid-flow) flows)]
+    (create-label-seq (reflow message (:breaks (first valid-flows))) true)))
 
 (defn create-labels
   "Create a label for each message. If only one message center justify
   labels and allow reflow. Otherwise honour line breaks and left align."
   [[message & tail :as messages]]
-  (if tail 
+  (if tail
     (create-label-seq messages false)
     (create-label-with-flow message)))
 
@@ -194,11 +197,11 @@
 ;integration tests
 (defn integration-tests []
   ;doesn't realise full width;
-  (create-window "Hello") 
+  (create-window "Hello")
   ;honours line breaks, left aligns and handles tabs:
-  (create-window "for(int i=0; i<10; i++){\n\ti-=1;\n\t\tg++;\n\tg++;\n\t\t\tg++;\ng++;\n\tg++;\n}") 
+  (create-window "for(int i=0; i<10; i++){\n\ti-=1;\n\t\tg++;\n\tg++;\n\t\t\tg++;\ng++;\n\tg++;\n}")
   ;breaks and center justifies:
-  (create-window "This is a really long sentence that should wrap and display in a smaller font. This is a really long sentence that should wrap and display in a smaller font.") 
+  (create-window "This is a really long sentence that should wrap and display in a smaller font. This is a really long sentence that should wrap and display in a smaller font.")
   ;realises full width but doesn't break:
   (create-window "07590 719599"))
 
