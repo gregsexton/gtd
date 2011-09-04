@@ -41,7 +41,7 @@
   (reduce #(max (count %2) %1) 0 coll))
 
 ;labels
-(defn lbl-font-size 
+(defn lbl-font-size
   "Get the label's font size."
   [lbl]
   (.. lbl getFont getSize))
