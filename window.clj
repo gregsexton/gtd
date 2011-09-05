@@ -3,6 +3,8 @@
   (:import
      (javax.swing JDialog JLabel Box)
      (java.awt.event KeyAdapter KeyEvent)
+     (com.sun.awt AWTUtilities AWTUtilities$Translucency)
+     (java.awt.geom RoundRectangle2D$Double)
      (java.awt Color Toolkit)))
 
 ;intended exports:
@@ -13,7 +15,7 @@
 
 (def SCREEN-WIDTH (.. Toolkit getDefaultToolkit getScreenSize getWidth))
 (def SCREEN-HEIGHT (.. Toolkit getDefaultToolkit getScreenSize getHeight))
-(def SCREEN-MARGIN 100)
+(def SCREEN-MARGIN 200)
 
 (def MAX-WIN-WIDTH (- SCREEN-WIDTH SCREEN-MARGIN))
 (def MAX-WIN-HEIGHT (- SCREEN-HEIGHT SCREEN-MARGIN))
@@ -101,11 +103,20 @@
         sizes (iterate next-fs-gen MIN-FONT-SIZE)]
     (get-new-lbl-font lbl (select-font-size sizes))))
 
+(defn drop-shadow-label [message alignment]
+  (proxy [JLabel] [message alignment]
+    (paintComponent [g]
+      (doto g
+        (.setColor (Color. 20 20 20))
+        (.drawString message 4 (+ 4 (.getAscent (proxy-super getFontMetrics
+                                                             (proxy-super getFont))))))
+      (proxy-super paintComponent g))))
+
 (defn create-label
   "Create a label for the message. Fits the label to the MAX-LBL-WIDTH
   and other constraints. Does not perform any sort of reflow."
   [center? max-height message]
-  (let [lbl (JLabel. message (if center? JLabel/CENTER JLabel/LEFT))]
+  (let [lbl (drop-shadow-label message (if center? JLabel/CENTER JLabel/LEFT))]
     (.setFont lbl (label-font lbl message max-height))
     (.setForeground lbl (Color. 255 255 255))
     (.setAlignmentX lbl (if center? 0.5 0.0))
@@ -178,20 +189,29 @@
     (.setVisible true)
     (.toFront)))
 
+(defn make-win-translucent [win]
+  (if (and (AWTUtilities/isTranslucencySupported AWTUtilities$Translucency/PERPIXEL_TRANSLUCENT)
+           (AWTUtilities/isTranslucencyCapable (.getGraphicsConfiguration win)))
+    (doto win
+      (AWTUtilities/setWindowOpaque true)
+      (AWTUtilities/setWindowOpacity (float 0.7)))
+      ;(AWTUtilities/setWindowShape (RoundRectangle2D$Double. 0 0 (.getWidth win) (.getHeight win) 20 20))
+    win))
+
 (defn create-initial-win
   "Create a default window of default size."
   []
   (doto (JDialog.)
     (.setUndecorated true)
     (.setAlwaysOnTop true)
-    (.setBackground (Color. 0 81 115 80))
+    (.. getContentPane (setBackground (Color. 0 81 115)))
     (.setSize MAX-WIN-WIDTH MAX-WIN-HEIGHT)))
 
 (defn create-window-with-labels
   "Create a default window, add all the labels, resize, center, add
   listeners and display."
   [labels]
-  (let [win (create-initial-win)
+  (let [win (make-win-translucent (create-initial-win))
         box (Box/createVerticalBox)
         lbl-count (count labels)]
     (.addKeyListener win (close-window-key-listener win))

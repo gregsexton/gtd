@@ -77,5 +77,5 @@
 
 (def reflow-test '("This" "is" "a" "really" "long" "sentence" "that" "should" "wrap" "and" "display" "in" "a" "smaller" "font." "This" "is" "a" "really" "long" "sentence" "that" "should" "wrap" "and" "display" "in" "a" "smaller" "font."))
 
-(even-partitions reflow-test count 7) ;way slow
+;(even-partitions reflow-test count 7) ;way slow
 ;(even-partitions reflow-test count 8) ;starting to disappear to never land
