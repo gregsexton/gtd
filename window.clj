@@ -2,6 +2,7 @@
   (:use [reflow :only (reflow)])
   (:import
      (javax.swing JDialog JLabel Box)
+     (java.awt.event KeyAdapter KeyEvent)
      (java.awt Color Toolkit)))
 
 ;intended exports:
@@ -149,6 +150,13 @@
     (create-label-seq messages false)
     (create-label-with-flow message)))
 
+;key listener
+(defn close-window-key-listener [win]
+  (proxy [KeyAdapter] []
+    (keyPressed [e]
+      (when (= (.getKeyCode e) KeyEvent/VK_ESCAPE)
+        (.dispose win)))))
+
 ;window
 (defn center-window [win]
   (.setLocation win
@@ -180,12 +188,13 @@
     (.setSize MAX-WIN-WIDTH MAX-WIN-HEIGHT)))
 
 (defn create-window-with-labels
-  "Create a default window, add all the labels, resize, center and
-  display."
+  "Create a default window, add all the labels, resize, center, add
+  listeners and display."
   [labels]
   (let [win (create-initial-win)
         box (Box/createVerticalBox)
         lbl-count (count labels)]
+    (.addKeyListener win (close-window-key-listener win))
     (.add win box)
     (.add box (Box/createVerticalGlue))
     (doseq [lbl labels]
