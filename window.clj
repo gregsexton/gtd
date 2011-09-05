@@ -25,6 +25,9 @@
 (def MAX-LBL-WIDTH (- MAX-WIN-WIDTH WIN-MARGIN))
 (def MAX-LBL-HEIGHT (- MAX-WIN-HEIGHT WIN-MARGIN))
 
+;the font size to rise by when iterating toward desired font
+(def FONT-INCREMENT 5)
+
 ;utilities
 (defn drop-while-not [f coll]
   (drop-while (complement f) coll))
@@ -61,8 +64,8 @@
 (defn string-width-in-label
   "Pixel width of string using label's current font."
   [lbl font message]
-  (if-let [fm (. lbl (getFontMetrics font))]
-    (. fm (stringWidth message))))
+  (if-let [fm (.getFontMetrics lbl font)]
+    (.stringWidth fm message)))
 
 (defn string-height-in-label
   "Pixel height of any string using the font in the label."
@@ -79,7 +82,7 @@
           height (string-height-in-label lbl font)]
       (cond
         (> height max-height) 0
-        (< width MAX-LBL-WIDTH) 5
+        (< width MAX-LBL-WIDTH) FONT-INCREMENT 
         (> width MAX-LBL-WIDTH) 0)))
   (fn [last-size]
     (let [font (get-new-lbl-font lbl last-size)
@@ -90,11 +93,12 @@
   "Select font size to use from collection of generated sizes."
   [sizes]
   (float
-    (ffirst
-      (drop-while-not
-        #(or (= (first %) (second %))
-             (= (first %) (second (rest %))))
-        (partition 3 1 sizes)))))
+    (- (ffirst
+         (drop-while-not
+           #(or (= (first %) (second %))
+                (= (first %) (second (rest %))))
+           (partition 3 1 sizes)))
+       FONT-INCREMENT)))
 
 (defn label-font
   "Generate the label's font."
