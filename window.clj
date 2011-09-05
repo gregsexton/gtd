@@ -199,7 +199,7 @@
 
 (defn create-window [message]
   "Create the window displaying the message."
-  ((comp create-window-with-labels create-labels lines expand-tabs) message))
+  (-> message expand-tabs lines create-labels create-window-with-labels))
 
 ;integration tests
 (defn integration-tests []
