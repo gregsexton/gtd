@@ -29,6 +29,9 @@
 (defn lines [str-input]
   (seq (.split #"\n" str-input)))
 
+(defn expand-tabs [str-input]
+  (apply str (map #(if (= % \tab) "    " %) str-input)))
+
 (defn longest-item
   "Returns the item with longest count in collection coll."
   [coll]
@@ -196,18 +199,18 @@
 
 (defn create-window [message]
   "Create the window displaying the message."
-  (create-window-with-labels
-    (create-labels (lines message))))
+  ((comp create-window-with-labels create-labels lines expand-tabs) message))
 
 ;integration tests
 (defn integration-tests []
   ;doesn't realise full width;
   (create-window "Hello")
   ;honours line breaks, left aligns and handles tabs:
-  (create-window "for(int i=0; i<10; i++){\n\ti-=1;\n\t\tg++;\n\tg++;\n\t\t\tg++;\ng++;\n\tg++;\n}")
+  (create-window "for(int i=0; i<10; i++){\n\ti-=1;\n\tg++;\n\tg++;\n\tg++;\n\tg++;\n\tg++;\n}")
   ;breaks and center justifies:
   (create-window "This is a really long sentence that should wrap and display in a smaller font. This is a really long sentence that should wrap and display in a smaller font.")
   ;realises full width but doesn't break:
-  (create-window "07590 719599"))
+  (create-window "07590 719599")
+  )
 
 (integration-tests)
