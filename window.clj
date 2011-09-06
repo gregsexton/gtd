@@ -10,7 +10,7 @@
 ;intended exports:
   ;create-window
 
-(def MIN-FONT-SIZE 20)
+(def MIN-FONT-SIZE 90)
 (def MAX-FONT-SIZE 300)
 
 (def SCREEN-WIDTH (.. Toolkit getDefaultToolkit getScreenSize getWidth))
@@ -51,6 +51,10 @@
   (reduce #(max (count %2) %1) 0 coll))
 
 ;labels
+(defn lbl-font
+  "Get the label's font."
+  [lbl] (.getFont lbl))
+
 (defn lbl-font-size
   "Get the label's font size."
   [lbl]
@@ -118,10 +122,11 @@
 
 (defn create-label
   "Create a label for the message. Fits the label to the MAX-LBL-WIDTH
-  and other constraints. Does not perform any sort of reflow."
-  [center? max-height message]
+  and other constraints. Does not perform any sort of reflow. If font is
+  not nil then it is used otherwise a best-fit font is chosen."
+  [center? max-height message font]
   (let [lbl (drop-shadow-label message (if center? JLabel/CENTER JLabel/LEFT))]
-    (.setFont lbl (label-font lbl message max-height))
+    (.setFont lbl (if (nil? font) (label-font lbl message max-height) font))
     (.setForeground lbl (Color. 255 255 255))
     (.setAlignmentX lbl (if center? 0.5 0.0))
     lbl))
@@ -137,10 +142,12 @@
       :else height)))
 
 (defn create-label-seq
-  "Create a seq of labels, one for each message in coll."
+  "Create a seq of labels, one for each message in coll. If font is nil
+  then a best-fit font is chosen."
   [coll center?]
-  (let [msg-cnt (count coll)]
-    (map (partial create-label center? (lbl-max-height msg-cnt))
+  (let [msg-cnt (count coll)
+        font (lbl-font (create-label center? (lbl-max-height msg-cnt) (longest-item coll) nil))]
+    (map #(create-label center? (lbl-max-height msg-cnt) % font)
          coll)))
 
 (defn create-label-with-flow
@@ -149,7 +156,7 @@
   [message]
   (defn valid-flow [{:keys [breaks longest-msg]}]
     (> (lbl-font-size
-          (create-label true (lbl-max-height breaks) longest-msg))
+          (create-label true (lbl-max-height breaks) longest-msg nil))
         MIN-FONT-SIZE))
   (let [breaks-seq  (iterate inc 1)
         longests    (map #(longest-item (reflow message %)) breaks-seq)
