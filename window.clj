@@ -5,12 +5,12 @@
      (java.awt.event KeyAdapter KeyEvent)
      (com.sun.awt AWTUtilities AWTUtilities$Translucency)
      (java.awt.geom RoundRectangle2D$Double)
-     (java.awt Color Toolkit)))
+     (java.awt Font Color Toolkit)))
 
 ;intended exports:
   ;create-window
 
-(def MIN-FONT-SIZE 90)
+(def MIN-FONT-SIZE 40)
 (def MAX-FONT-SIZE 300)
 
 (def SCREEN-WIDTH (.. Toolkit getDefaultToolkit getScreenSize getWidth))
@@ -107,6 +107,7 @@
 (defn label-font
   "Generate the label's font."
   [lbl message max-height]
+  (.setFont lbl (Font. "Arial" Font/BOLD MIN-FONT-SIZE)) ;first time: set font face
   (let [next-fs-gen (next-font-size lbl message max-height)
         sizes (iterate next-fs-gen MIN-FONT-SIZE)]
     (get-new-lbl-font lbl (select-font-size sizes))))
