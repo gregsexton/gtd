@@ -218,19 +218,23 @@
 (defn size-window [win layout-manager]
   (.setSize win MAX-WIN-WIDTH (get-win-height layout-manager)))
 
-(defn make-visible [win]
-  (doto win
-    (.setVisible true)
-    (.toFront)))
-
-(defn make-win-translucent [win]
+(defn make-win-translucent [win opacity]
   (if (and (AWTUtilities/isTranslucencySupported AWTUtilities$Translucency/PERPIXEL_TRANSLUCENT)
            (AWTUtilities/isTranslucencyCapable (.getGraphicsConfiguration win)))
     (doto win
-      (AWTUtilities/setWindowOpaque true)
-      (AWTUtilities/setWindowOpacity (float 0.7)))
+      (AWTUtilities/setWindowOpacity (float opacity))
+      (AWTUtilities/setWindowOpaque true))
       ;(AWTUtilities/setWindowShape (RoundRectangle2D$Double. 0 0 (.getWidth win) (.getHeight win) 20 20))
     win))
+
+(defn make-visible [win]
+  (make-win-translucent win 0)
+  (doto win
+    (.setVisible true)
+    (.toFront))
+  (doseq [opacity (take 16 (iterate (partial + 0.05) 0.1))]
+    (Thread/sleep 20) ;could speed up rather than linear?
+    (make-win-translucent win opacity)))
 
 (defn create-initial-win
   "Create a default window of default size."
@@ -245,7 +249,7 @@
   "Create a default window, add all the labels, resize, center, add
   listeners and display."
   [labels]
-  (let [win (make-win-translucent (create-initial-win))
+  (let [win (create-initial-win)
         box (Box/createVerticalBox)
         lbl-count (count labels)]
     (add-listeners win)
