@@ -2,7 +2,7 @@
   (:use [reflow :only (reflow)])
   (:import
      (javax.swing JDialog JLabel Box)
-     (java.awt.event KeyAdapter KeyEvent)
+     (java.awt.event KeyAdapter KeyEvent MouseAdapter MouseMotionAdapter)
      (com.sun.awt AWTUtilities AWTUtilities$Translucency)
      (java.awt.geom RoundRectangle2D$Double)
      (java.awt Font Color Toolkit)))
@@ -86,7 +86,7 @@
           height (string-height-in-label lbl font)]
       (cond
         (> height max-height) 0
-        (< width MAX-LBL-WIDTH) FONT-INCREMENT 
+        (< width MAX-LBL-WIDTH) FONT-INCREMENT
         (> width MAX-LBL-WIDTH) 0)))
   (fn [last-size]
     (let [font (get-new-lbl-font lbl last-size)
@@ -173,12 +173,34 @@
     (create-label-seq messages false)
     (create-label-with-flow message)))
 
-;key listener
+;listeners
 (defn close-window-key-listener [win]
   (proxy [KeyAdapter] []
     (keyPressed [e]
       (when (= (.getKeyCode e) KeyEvent/VK_ESCAPE)
         (.dispose win)))))
+
+(def *initial-point* (atom nil))
+
+(defn set-initial-click-listener []
+  (proxy [MouseAdapter] []
+    (mousePressed [e]
+      (reset! *initial-point* (.getPoint e)))))
+
+(defn move-window-mouse-listener [win]
+  (proxy [MouseMotionAdapter] []
+    (mouseDragged [e]
+      (if-let [initial-point @*initial-point*]
+        (let [x-moved (- (.getX e) (.x initial-point))
+              y-moved (- (.getY e) (.y initial-point))]
+          (.setLocation win
+                        (+ (.. win getLocation x) x-moved)
+                        (+ (.. win getLocation y) y-moved)))))))
+
+(defn add-listeners [win]
+  (.addKeyListener win (close-window-key-listener win))
+  (.addMouseListener win (set-initial-click-listener))
+  (.addMouseMotionListener win (move-window-mouse-listener win)))
 
 ;window
 (defn center-window [win]
@@ -226,7 +248,7 @@
   (let [win (make-win-translucent (create-initial-win))
         box (Box/createVerticalBox)
         lbl-count (count labels)]
-    (.addKeyListener win (close-window-key-listener win))
+    (add-listeners win)
     (.add win box)
     (.add box (Box/createVerticalGlue))
     (doseq [lbl labels]
