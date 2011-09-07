@@ -3,7 +3,7 @@
   (:use [clojure.string :only (split)])
   (:import
      (java.io File)
-     (javax.swing JDialog JLabel Box ImageIcon)
+     (javax.swing JDialog JLabel Box ImageIcon JScrollPane BorderFactory)
      (java.awt.event KeyAdapter KeyEvent MouseAdapter MouseMotionAdapter)
      (com.sun.awt AWTUtilities AWTUtilities$Translucency)
      (java.awt.geom RoundRectangle2D$Double)
@@ -205,12 +205,10 @@
 (defn create-full-size-image-label
   "Creates a label with the given image file path at full size."
   [img]
-  ;TODO wrap in scrollbars if too big and make only as big as a label should get
   (JLabel. (ImageIcon. img)))
 
 (defn create-image-label 
   "Create an image label sized appropriately."
-  ;TODO: add some sort of listener to zoom in and out on click if too big.
   [file-path] 
   (let [img (get-image file-path)] 
     (if (or (> (.getWidth img) MAX-LBL-WIDTH)
@@ -242,10 +240,13 @@
                         (+ (.. win getLocation x) x-moved)
                         (+ (.. win getLocation y) y-moved)))))))
 
-(defn add-win-listeners [win]
-  (.addKeyListener win (close-window-key-listener win))
-  (.addMouseListener win (set-initial-click-listener))
-  (.addMouseMotionListener win (move-window-mouse-listener win)))
+(defn add-win-listeners 
+  ([win]
+   (add-win-listeners win win))
+  ([win top-component]
+   (.addKeyListener win (close-window-key-listener win)) 
+   (.addMouseListener top-component (set-initial-click-listener)) 
+   (.addMouseMotionListener top-component (move-window-mouse-listener win))))
 
 ;window
 (defn center-window [win]
@@ -290,15 +291,22 @@
     (.. getContentPane (setBackground (Color. 0 81 115)))
     (.setSize MAX-WIN-WIDTH MAX-WIN-HEIGHT)))
 
+(defn create-win-scrollpane [view]
+  (doto (JScrollPane. view)
+    (.setBorder (BorderFactory/createEmptyBorder))
+    (.setOpaque false)
+    (.. getViewport (setOpaque false))))
+
 (defn create-window-with-labels
   "Create a default window, add all the labels, resize, center, add
   listeners and display."
   [labels]
   (let [win (create-initial-win)
         box (Box/createVerticalBox)
+        scroll (create-win-scrollpane box)
         lbl-count (count labels)]
-    (add-win-listeners win)
-    (.add win box)
+    (add-win-listeners win scroll)
+    (.add win scroll)
     (.add box (Box/createVerticalGlue))
     (doseq [lbl labels]
       (.add box lbl)
@@ -331,7 +339,7 @@
 ;integration tests
 (defn integration-tests []
   ;doesn't realise full width;
-  (create-window "Hello")
+  (create-window "Go for a coffee.")
   ;honours line breaks, left aligns and handles tabs:
   (create-window "for(int i=0; i<10; i++){\n\ti-=1;\n\tg++;\n\tg++;\n\tg++;\n\tg++;\n\tg++;\n}")
   ;breaks and center justifies:
