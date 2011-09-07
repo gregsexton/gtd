@@ -1,7 +1,7 @@
 (ns server
   (:use [window :only (create-window)])
   (:use [date-parser :only (parse-date)])
-  (:use [clojure.string :only (join)]) 
+  (:use [clojure.string :only (join)])
   (:use [clojure.contrib.server-socket :only (create-server)])
   (:import
      (java.net InetAddress)
@@ -10,6 +10,12 @@
 ;intended exports:
   ;start-server
 
+(defn list-tasks []
+  (println "TODO!"))
+
+(defn create-window-timer [request]
+  (create-window (:content request)))
+
 (defn get-date-str [line]
   (apply str (drop 5 line)))
 
@@ -17,8 +23,7 @@
   ;TODO: just assumed it is a task
   (let [request {:date (parse-date (get-date-str (first lines)))
                  :content (join "\n" (rest lines))}]
-    ;TODO: launch off a timer here
-    (create-window (:content request))
+    (create-window-timer request)
     (println "ACCEPTED")))
 
 (defn handle [in out]
@@ -32,9 +37,9 @@
         (if continue
           (cond
             (= line ".") (parse-multi-line acc)
-            :else (recur (conj acc line) continue)) 
+            :else (recur (conj acc line) continue))
           (cond
-            (= line "LIST") (println "Print tasks.")
+            (= line "LIST") (list-tasks)
             (= (apply str (take 4 line)) "TASK") (recur (conj acc line) true)))))))
 
 (defn start-server
