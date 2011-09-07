@@ -1,11 +1,13 @@
 (ns window
   (:use [reflow :only (reflow)])
+  (:use [clojure.string :only (split)])
   (:import
-     (javax.swing JDialog JLabel Box)
+     (java.io File)
+     (javax.swing JDialog JLabel Box ImageIcon)
      (java.awt.event KeyAdapter KeyEvent MouseAdapter MouseMotionAdapter)
      (com.sun.awt AWTUtilities AWTUtilities$Translucency)
      (java.awt.geom RoundRectangle2D$Double)
-     (java.awt Font Color Toolkit)))
+     (java.awt Font Color Toolkit Image)))
 
 ;intended exports:
   ;create-window
@@ -50,7 +52,20 @@
   [coll]
   (reduce #(max (count %2) %1) 0 coll))
 
-;labels
+(defn is-file? [file-path]
+  (.exists (File. file-path)))
+
+(defn extension [file-path]
+  (last (split file-path #"\.")))
+
+(defn is-image? [file-path]
+  (let [ext (.toLowerCase (extension file-path))]
+    (and (is-file? file-path)
+         (not= "" ext)
+         ;bmp not supported by imageicon => not supported by gtd
+         (some #{ext} ["jpg" "jpeg" "png" "gif"]))))
+
+;text labels
 (defn lbl-font
   "Get the label's font."
   [lbl] (.getFont lbl))
@@ -173,6 +188,36 @@
     (create-label-seq messages false)
     (create-label-with-flow message)))
 
+;image labels
+(defn get-image [file-path]
+  (.getImage (ImageIcon. file-path)))
+
+(defn create-scaled-image-label
+  "Creates a label with the given image file path scaled to fit the
+  height and width of the window."
+  [img]
+  (JLabel.
+    (ImageIcon.
+      (if (> (.getWidth img) (.getHeight img))
+        (.getScaledInstance img MAX-LBL-WIDTH -1 Image/SCALE_SMOOTH)
+        (.getScaledInstance img -1 MAX-LBL-HEIGHT Image/SCALE_SMOOTH)))))
+
+(defn create-full-size-image-label
+  "Creates a label with the given image file path at full size."
+  [img]
+  ;TODO wrap in scrollbars if too big and make only as big as a label should get
+  (JLabel. (ImageIcon. img)))
+
+(defn create-image-label 
+  "Create an image label sized appropriately."
+  ;TODO: add some sort of listener to zoom in and out on click if too big.
+  [file-path] 
+  (let [img (get-image file-path)] 
+    (if (or (> (.getWidth img) MAX-LBL-WIDTH)
+            (> (.getHeight img) MAX-LBL-HEIGHT)) 
+      (create-scaled-image-label img) 
+      (create-full-size-image-label img))))
+
 ;listeners
 (defn close-window-key-listener [win]
   (proxy [KeyAdapter] []
@@ -197,7 +242,7 @@
                         (+ (.. win getLocation x) x-moved)
                         (+ (.. win getLocation y) y-moved)))))))
 
-(defn add-listeners [win]
+(defn add-win-listeners [win]
   (.addKeyListener win (close-window-key-listener win))
   (.addMouseListener win (set-initial-click-listener))
   (.addMouseMotionListener win (move-window-mouse-listener win)))
@@ -252,7 +297,7 @@
   (let [win (create-initial-win)
         box (Box/createVerticalBox)
         lbl-count (count labels)]
-    (add-listeners win)
+    (add-win-listeners win)
     (.add win box)
     (.add box (Box/createVerticalGlue))
     (doseq [lbl labels]
@@ -264,9 +309,24 @@
     (center-window win)
     (make-visible win)))
 
+(defn create-window-with-image
+  "Create a default window, add an image label, resize, center, add
+  listeners and display."
+  [file-path]
+  (let [win (create-initial-win)]
+    (add-win-listeners win)
+    (.add win (create-image-label file-path))
+    (.validate win)
+    (size-window win win) ;specify the win as the layout-manager
+    (center-window win)
+    (make-visible win)))
+
+;public interface
 (defn create-window [message]
   "Create the window displaying the message."
-  (-> message expand-tabs lines create-labels create-window-with-labels))
+  (if (is-image? message)
+    (-> message create-window-with-image)
+    (-> message expand-tabs lines create-labels create-window-with-labels)))
 
 ;integration tests
 (defn integration-tests []
