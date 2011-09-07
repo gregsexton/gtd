@@ -347,5 +347,3 @@
   ;realises full width but doesn't break:
   (create-window "07590 719599")
   )
-
-(integration-tests)
