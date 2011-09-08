@@ -14,7 +14,8 @@
   (println "TODO!"))
 
 (defn create-window-timer [request]
-  (create-window (:content request)))
+  (if-let [msg (:content request)]
+    (create-window msg)))
 
 (defn get-date-str [line]
   (apply str (drop 5 line)))
