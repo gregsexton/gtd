@@ -28,6 +28,7 @@ def list_tasks(port):
             ret = sock.recv(80)
         acc.append(ret[:-3]) #remove "\n.\n" from end.
     print ''.join(acc)
+    sock.close()
 
 def start_server(port):
     return os.system('gtd-server ' + str(port))
@@ -35,6 +36,12 @@ def start_server(port):
 def sanatize_task_message(message):
     lst = map(lambda x: ". " if x == "." else x, message.split('\n'))
     return '\n'.join(lst)
+
+def create_task_successful():
+    sys.exit(0)
+def create_task_unsuccessful():
+    print "ERROR: Task request unsuccessful."
+    sys.exit(1)
 
 def create_task(date_specifier, port):
     sock = connect_to_server(port)
@@ -47,7 +54,10 @@ def create_task(date_specifier, port):
     ret = sock.recv(16)
     sock.close()
 
-    sys.exit(0) if ret.strip() == "ACCEPTED" else sys.exit(1)
+    if ret.strip() == "ACCEPTED":
+        create_task_successful()
+    else:
+        create_task_unsuccessful()
 
 def usage():
     print "Usage: gtd [OPTION]* [TIME SPECIFIER]"
