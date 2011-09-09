@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import socket
+import os
 import sys
 import getopt
 
@@ -21,8 +22,7 @@ def list_tasks(port):
     print ret
 
 def start_server(port):
-    #TODO:
-    print "start server"
+    return os.system('gtd-server')
 
 def create_task(date_specifier, port):
     sock = connect_to_server(port)
@@ -71,8 +71,7 @@ def parse_args(argv):
             list_tasks(port)
             sys.exit()
         if opt in ("s", "--server"):
-            start_server(port)
-            sys.exit()
+            sys.exit(start_server(port))
 
     create_task(' '.join(args), port)
 
