@@ -3,6 +3,8 @@
   (:use clojure.contrib.test-is)
   (import (java.util Calendar GregorianCalendar)))
 
+;TODO: test case insensitivity
+
 (deftest absolute-absvals-return-true
   (is (true? (absolute? "2011-04-30")))
   (is (true? (absolute? "2011-04-30 14:32")))
@@ -79,15 +81,15 @@
   (is (false? (absolute? "hr"))))
 
 (deftest get-date-absvals-return-correct-date
-  (is (= (create-date 2011 04 30 14 32 0) (get-date "2011-04-30 14:32")))
-  (is (= (create-date 2011 04 30 14 32 17) (get-date "2011-04-30 14:32:17")))
-  (is (= (create-date 2011 04 30 14 32 0) (get-date "2011-04-30 02:32pm")))
-  (is (= (create-date 2011 04 30 14 32 0) (get-date "2011-04-30 02:32 pm")))
-  (is (= (create-date 2011 04 30 14 32 0) (get-date "2011-04-30 2:32 pm")))
-  (is (= (create-date 2011 04 30 2 32 0) (get-date "2011-04-30 2:32 am")))
-  (is (= (create-date 2011 04 30 14 32 17) (get-date "2011-04-30 02:32:17pm")))
-  (is (= (create-date 2011 04 30 14 32 17) (get-date "2011-04-30 02:32:17 pm")))
-  (is (= (create-date 2011 04 30 14 32 17) (get-date "2011-04-30 2:32:17 pm")))
+  (is (= (create-date 2011 3 30 14 32 0) (get-date "2011-04-30 14:32")))
+  (is (= (create-date 2011 3 30 14 32 17) (get-date "2011-04-30 14:32:17")))
+  (is (= (create-date 2011 3 30 14 32 0) (get-date "2011-04-30 02:32pm")))
+  (is (= (create-date 2011 3 30 14 32 0) (get-date "2011-04-30 02:32 pm")))
+  (is (= (create-date 2011 3 30 14 32 0) (get-date "2011-04-30 2:32 pm")))
+  (is (= (create-date 2011 3 30 2 32 0) (get-date "2011-04-30 2:32 am")))
+  (is (= (create-date 2011 3 30 14 32 17) (get-date "2011-04-30 02:32:17pm")))
+  (is (= (create-date 2011 3 30 14 32 17) (get-date "2011-04-30 02:32:17 pm")))
+  (is (= (create-date 2011 3 30 14 32 17) (get-date "2011-04-30 2:32:17 pm")))
   (is (= (create-date (get-year) (get-month) (get-day) 14 32 0) (get-date "14:32")))
   (is (= (create-date (get-year) (get-month) (get-day) 14 32 17) (get-date "14:32:17")))
   (is (= (create-date (get-year) (get-month) (get-day) 14 32 0) (get-date "02:32pm")))
@@ -213,5 +215,4 @@
   (is (= 1 (get-offset-value "hour")))
   (is (= 1 (get-offset-value "hr"))))
 
-(get-date-absvals-return-correct-date)
-;(run-tests)
+(run-tests)
