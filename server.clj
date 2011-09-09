@@ -11,7 +11,13 @@
   ;start-server
 
 (defn list-tasks []
-  (println "TODO!"))
+  (println "testing1")
+  (println "testing2")
+  (println "testing3")
+  (println "testing4")
+  (println "testing5")
+  (println "Need to do this.")
+  (println "."))
 
 (defn create-window-timer [request]
   (if-let [msg (:content request)]

@@ -19,7 +19,15 @@ def list_tasks(port):
     sock = connect_to_server(port)
     sock.sendall('LIST\n')
     ret = sock.recv(80)
-    print ret
+    acc = []
+    if ret == "\n":
+        print "No tasks currently."
+    else:
+        while not "." in ret.split('\n'):
+            acc.append(ret)
+            ret = sock.recv(80)
+        acc.append(ret[:-3]) #remove "\n.\n" from end.
+    print ''.join(acc)
 
 def start_server(port):
     return os.system('gtd-server')
