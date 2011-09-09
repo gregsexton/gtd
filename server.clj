@@ -4,6 +4,7 @@
   (:use [clojure.string :only (join)])
   (:use [clojure.contrib.server-socket :only (create-server)])
   (:import
+     (java.util Timer TimerTask)
      (java.net InetAddress)
      (java.io BufferedReader InputStreamReader PrintWriter)))
 
@@ -19,9 +20,15 @@
   (println "Need to do this.")
   (println "."))
 
+(defn create-window-timer-task [message]
+  (proxy [TimerTask] []
+    (run []
+      (create-window message))))
+
 (defn create-window-timer [request]
   (if-let [msg (:content request)]
-    (create-window msg)))
+    (doto (Timer.)
+      (.schedule (create-window-timer-task msg) (:date request)))))
 
 (defn get-date-str [line]
   (apply str (drop 5 line)))
