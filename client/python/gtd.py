@@ -30,11 +30,16 @@ def list_tasks(port):
     print ''.join(acc)
 
 def start_server(port):
-    return os.system('gtd-server')
+    return os.system('gtd-server ' + str(port))
+
+def sanatize_task_message(message):
+    lst = map(lambda x: ". " if x == "." else x, message.split('\n'))
+    return '\n'.join(lst)
 
 def create_task(date_specifier, port):
     sock = connect_to_server(port)
     data = sys.stdin.read()
+    data = sanatize_task_message(data)
     sock.sendall('TASK %s\n' % date_specifier)
     sock.sendall(data)
     sock.sendall('\n.\n')
