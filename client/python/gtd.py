@@ -15,7 +15,6 @@ def connect_to_server(port):
     return sock
 
 def list_tasks(port):
-    #TODO: need a loop to get all output
     sock = connect_to_server(port)
     sock.sendall('LIST\n')
     ret = sock.recv(80)
@@ -27,7 +26,7 @@ def list_tasks(port):
             acc.append(ret)
             ret = sock.recv(80)
         acc.append(ret[:-3]) #remove "\n.\n" from end.
-    print ''.join(acc)
+        print ''.join(acc)
     sock.close()
 
 def start_server(port):
