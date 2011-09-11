@@ -90,7 +90,7 @@
    :hour   [#"^hours?" #"^hrs?" #"^h"]})
 (def separator #"^\s*")
 (def num-regex #"^\d+")
-(def one-regex #"^(?:(?:an?\s+)|(?:next\s+)|(?:1(?=\D)))")
+(def one-regex #"^(?:(?:an?\s+)|(?:next\s+))")
 
 (defn split-regex
   "Returns a vector of [match rest] where match is the string that
