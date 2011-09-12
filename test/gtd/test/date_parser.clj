@@ -1,5 +1,5 @@
-(ns date-parser-tests
-  (:use date-parser)
+(ns gtd.test.date-parser
+  (:use gtd.date-parser)
   (:use clojure.contrib.test-is)
   (import (java.util Calendar GregorianCalendar)))
 
@@ -241,5 +241,3 @@
   (is (= 1 (:val (get-offset "an hour"))))
   (is (= 1 (:val (get-offset "hour"))))
   (is (= 1 (:val (get-offset "hr")))))
-
-(run-tests)

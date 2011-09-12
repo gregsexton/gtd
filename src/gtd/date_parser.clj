@@ -1,4 +1,4 @@
-(ns date-parser
+(ns gtd.date-parser
   (:use [clojure.string :only (trim)])
   (:use [clojure.contrib.cond])
   (:require [clojure.contrib.string :as s])

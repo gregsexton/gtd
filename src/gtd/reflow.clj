@@ -1,4 +1,4 @@
-(ns reflow
+(ns gtd.reflow
   (:use [clojure.string :only (split join)]))
 
 ;intended exports:

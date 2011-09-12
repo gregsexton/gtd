@@ -1,6 +1,6 @@
-(ns server
-  (:use [window :only (create-window)])
-  (:use [date-parser :only (parse-date)])
+(ns gtd.server
+  (:use [gtd.window :only (create-window)])
+  (:use [gtd.date-parser :only (parse-date)])
   (:use [clojure.string :only (trim join)])
   (:use [clojure.contrib.server-socket :only (create-server)])
   (:import
@@ -94,5 +94,3 @@
   ([port]
    (create-server port handle 0
                   (InetAddress/getByAddress (byte-array (map byte [127 0 0 1]))))))
-
-(start-server)
