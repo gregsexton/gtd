@@ -15,8 +15,8 @@ def connect_to_server(port):
     return sock
 
 def list_tasks(port):
+    sock = connect_to_server(port)
     try:
-        sock = connect_to_server(port)
         sock.sendall('LIST\n')
         ret = sock.recv(80)
         acc = []
@@ -45,8 +45,8 @@ def create_task_unsuccessful():
     sys.exit(1)
 
 def create_task(msg, date_specifier, port):
+    sock = connect_to_server(port)
     try:
-        sock = connect_to_server(port)
         if msg == None:
             data = sys.stdin.read()
             print data,
