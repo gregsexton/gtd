@@ -15,19 +15,21 @@ def connect_to_server(port):
     return sock
 
 def list_tasks(port):
-    sock = connect_to_server(port)
-    sock.sendall('LIST\n')
-    ret = sock.recv(80)
-    acc = []
-    if ret == "\n":
-        print "No tasks currently."
-    else:
-        while not "." in ret.split('\n'):
-            acc.append(ret)
-            ret = sock.recv(80)
-        acc.append(ret[:-3]) #remove "\n.\n" from end.
-        print ''.join(acc)
-    sock.close()
+    try:
+        sock = connect_to_server(port)
+        sock.sendall('LIST\n')
+        ret = sock.recv(80)
+        acc = []
+        if ret == "\n":
+            print "No tasks currently."
+        else:
+            while not "." in ret.split('\n'):
+                acc.append(ret)
+                ret = sock.recv(80)
+            acc.append(ret[:-3]) #remove "\n.\n" from end.
+            print ''.join(acc)
+    finally:
+        sock.close()
 
 def start_server(port):
     return os.system('gtd-server ' + str(port))
@@ -42,16 +44,22 @@ def create_task_unsuccessful():
     print "ERROR: Task request unsuccessful."
     sys.exit(1)
 
-def create_task(date_specifier, port):
-    sock = connect_to_server(port)
-    data = sys.stdin.read()
-    data = sanatize_task_message(data)
-    sock.sendall('TASK %s\n' % date_specifier)
-    sock.sendall(data)
-    sock.sendall('\n.\n')
+def create_task(msg, date_specifier, port):
+    try:
+        sock = connect_to_server(port)
+        if msg == None:
+            data = sys.stdin.read()
+            print data,
+        else:
+            data = msg
+        data = sanatize_task_message(data)
+        sock.sendall('TASK %s\n' % date_specifier)
+        sock.sendall(data)
+        sock.sendall('\n.\n')
 
-    ret = sock.recv(16)
-    sock.close()
+        ret = sock.recv(16)
+    finally:
+        sock.close()
 
     if ret.strip() == "ACCEPTED":
         create_task_successful()
@@ -64,21 +72,27 @@ def usage():
     print "Example: echo \"Reminder!\" | gtd 30 mins"
     print ""
     print "OPTIONS:"
-    print "-h, --help       Print this message and exit."
-    print "-l, --list       List all upcoming tasks the server should display."
-    print "                 Exits immediately after."
-    print "-p, --port=PORT  Specify a different port than the default."
-    print "-s, --server     Start a server instance if not already started."
-    print "                 Exits immediately after."
+    print "-h, --help        Print this message and exit."
+    print "-l, --list        List all upcoming tasks the server should display."
+    print "                  Exits immediately after."
+    print "-m, --message=MSG Take the message from the arg list rather than"
+    print "                  standard in. The message is not echoed back."
+    print "-p, --port=PORT   Specify a different port than the default."
+    print "-s, --server      Start a server instance if not already started."
+    print "                  Exits immediately after."
     print ""
     print "TIME SPECIFIER:"
     print "Please see the gtd-server documentation for various ways of specifying"
     print "the time to delay before showing the notification."
+    print ""
+    print "Anything read via standard input is echoed to standard output to allow"
+    print "for gtd to be used in pipes."
 
 def parse_args(argv):
     port = 61212
+    msg = None
     try:
-        opts, args = getopt.getopt(argv, "hlp:s", ["help", "list", "port=", "server"])
+        opts, args = getopt.getopt(argv, "hlm:p:s", ["help", "list", "message=", "port=", "server"])
     except getopt.GetoptError:
         usage()
         sys.exit(1)
@@ -92,10 +106,12 @@ def parse_args(argv):
         if opt in ("-l", "--list"):
             list_tasks(port)
             sys.exit()
-        if opt in ("s", "--server"):
+        if opt in ("-s", "--server"):
             sys.exit(start_server(port))
+        if opt in ("-m", "--message"):
+            msg = arg
 
-    create_task(' '.join(args), port)
+    create_task(msg, ' '.join(args), port)
 
 if __name__ == '__main__':
     parse_args(sys.argv[1:])
