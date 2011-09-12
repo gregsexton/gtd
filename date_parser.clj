@@ -69,7 +69,7 @@
 
 (defn absolute? [date-str]
   ((comp not empty? first)
-     (re-find #"(\d{4}-\d{2}-\d{2} ?)?(\d{1,2}:\d{2}(:\d{2})?\s*(am|pm)?)?" date-str)))
+     (re-find #"(\d{4}-\d{2}-\d{2} ?)?(\d{1,2}(?:\.|:)\d{2}((?:\.|:)\d{2})?\s*(am|pm)?)?" date-str)))
 
 ;relative dates
 (def units
@@ -217,7 +217,7 @@
   (Integer. (nth (get-groups-date date) 3 (get-day))))
 
 (defn get-groups-time [time-str]
-  (re-find #"(\d{1,2}):(\d{2})(:(\d{2}))?\s*(am|pm)?" time-str))
+  (re-find #"(\d{1,2})(?:\.|:)(\d{2})((?:\.|:)(\d{2}))?\s*(am|pm)?" time-str))
 (defn pm? [date]
   (if-let [pm (nth (get-groups-time date) 5)]
     (= pm "pm")
@@ -233,7 +233,7 @@
                     "0")))
 
 (defn get-date [date-str]
-  (let [matches (re-find #"(\d{4}-\d{2}-\d{2} ?)?(\d{1,2}:\d{2}(:\d{2})?\s*(am|pm)?)?" date-str)]
+  (let [matches (re-find #"(\d{4}-\d{2}-\d{2} ?)?(\d{1,2}(?:\.|:)\d{2}((?:\.|:)\d{2})?\s*(am|pm)?)?" date-str)]
     (create-date (get-abs-year  (nth matches 1))
                  (get-abs-month (nth matches 1))
                  (get-abs-date  (nth matches 1))
