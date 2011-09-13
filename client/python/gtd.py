@@ -10,7 +10,7 @@ def connect_to_server(port):
     try:
         sock.connect(('localhost', port))
     except:
-        print "Could not connect to gtd server. Is it running? Try passing the -server flag."
+        print "Could not connect to gtd server. Is it running? Try passing the --server flag."
         sys.exit(1)
     return sock
 

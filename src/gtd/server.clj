@@ -76,14 +76,15 @@
      *out* (PrintWriter. out)]
     (loop [acc []
            continue false]
-      (let [line (read-line)]
-        (if continue
-          (cond
-            (= line ".") (parse-multi-line acc)
-            :else (recur (conj acc line) continue))
-          (cond
-            (= line "LIST") (list-tasks)
-            (= (apply str (take 4 line)) "TASK") (recur (conj acc line) true)))))))
+      (try (let [line (read-line)]
+             (if continue
+               (cond
+                 (= line ".") (parse-multi-line acc)
+                 :else (recur (conj acc line) continue))
+               (cond
+                 (= line "LIST") (list-tasks)
+                 (= (apply str (take 4 line)) "TASK") (recur (conj acc line) true))))
+        (catch Exception e nil)))))
 
 (defn start-server
   "Starts a gtd server instance. Takes a specific port argument or
@@ -92,5 +93,8 @@
   ([]
    (start-server 61212))
   ([port]
-   (create-server port handle 0
-                  (InetAddress/getByAddress (byte-array (map byte [127 0 0 1]))))))
+   (try 
+     (create-server port handle 0
+                    (InetAddress/getByAddress (byte-array (map byte [127 0 0 1]))))
+     (catch java.net.BindException e
+       (println "Could not bind to port: " port)))))
