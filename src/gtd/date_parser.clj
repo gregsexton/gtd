@@ -5,25 +5,22 @@
   (:import
      (java.util Calendar GregorianCalendar)))
 
-;intended exports:
-  ;parse-date
-
 ;date utilities
-(defn create-date [year month date hour minute sec]
+(defn- create-date [year month date hour minute sec]
   (let [cal (GregorianCalendar.)]
     (.set cal year month date hour minute sec)
     (.set cal Calendar/MILLISECOND 0)
     (.getTime cal)))
-(defn get-year []
+(defn- get-year []
   (.get (GregorianCalendar.) Calendar/YEAR))
-(defn get-month []
+(defn- get-month []
   (.get (GregorianCalendar.) Calendar/MONTH))
-(defn get-day []
+(defn- get-day []
   (.get (GregorianCalendar.) Calendar/DATE))
-(defn get-day-of-week []
+(defn- get-day-of-week []
   (.get (GregorianCalendar.) Calendar/DAY_OF_WEEK))
-(defn days-until [day]
-  (defn help [day]
+(defn- days-until [day]
+  (defn- help [day]
     (mod (+ (- day (get-day-of-week)) 7) 7))
   (let [mapping {:monday Calendar/MONDAY
                  :tuesday Calendar/TUESDAY
@@ -33,8 +30,8 @@
                  :saturday Calendar/SATURDAY
                  :sunday Calendar/SUNDAY}]
     (help (mapping day))))
-(defn months-until [month]
-  (defn help [month]
+(defn- months-until [month]
+  (defn- help [month]
     (mod (+ (- month (get-month)) 12) 12))
   (let [mapping {:january Calendar/JANUARY
                  :february Calendar/FEBRUARY
@@ -51,12 +48,12 @@
     (help (mapping month))))
 
 ;utilities
-(defn if-val
+(defn- if-val
   "Returns expr if it evaluates to anything but nil otherwise default."
   [expr default]
   (if (nil? expr) default expr))
 
-(defn first-of
+(defn- first-of
   "Returns the first value that pred evaluates as true. If no value
   exists returns default if supplied otherwise nil."
   ([coll pred]
@@ -67,7 +64,7 @@
        default
        (first candidates)))))
 
-(defn absolute? [date-str]
+(defn- absolute? [date-str]
   ((comp not empty? first)
      (re-find #"(\d{4}-\d{2}-\d{2} ?)?(\d{1,2}(?:\.|:)\d{2}((?:\.|:)\d{2})?\s*(am|pm)?)?" date-str)))
 
@@ -92,7 +89,7 @@
 (def num-regex #"^\d+")
 (def one-regex #"^(?:(?:an?\s+)|(?:next\s+))")
 
-(defn split-regex
+(defn- split-regex
   "Returns a vector of [match rest] where match is the string that
   matches the regex and rest is the remaining unmatched string. Assumes
   the regex starts with '^'. Returns nil if no match."
@@ -100,15 +97,15 @@
   (if-let [match (re-find regex string)]
     [match (s/drop (count match) string)]))
 
-(defn drop-regex [regex string]
+(defn- drop-regex [regex string]
   (if-let [[match tail] (split-regex regex string)]
     tail))
 
-(defn drop-regexes [coll string]
+(defn- drop-regexes [coll string]
   (first-of (map #(drop-regex % string) coll)
             (comp not nil?)))
 
-(defn match-token
+(defn- match-token
   "Returns map with keys [:token :rest] representing the matched token
   and the rest of the stream respectively. Returns nil if no match."
   [stream]
@@ -118,12 +115,12 @@
                           (keys tokens))
     (comp not nil?)))
 
-(defn match-number
+(defn- match-number
   "Returns map with keys [:number :rest] representing the matched number
   and the rest of the stream respectively. Returns nil if no match."
   [stream]
   ;TODO: can this be refactored and made a lot nicer? cond-let?
-  (defn match-one [stream] ;treat one specially due to synonyms
+  (defn- match-one [stream] ;treat one specially due to synonyms
     (if-let [[match tail] (split-regex one-regex stream)]
       {:number 1 :rest tail}))
   (if-let [match (match-one stream)] match
@@ -141,7 +138,7 @@
        {:number ~number :token ~token :rest tail#}
        (special-form-cond-let ~stream ~@more))))
 
-(defn match-special
+(defn- match-special
   "Returns map with keys [:number :token :rest] representing the matched
   number and token pair of the special form. :rest is the remaining
   unmatched stream. Returns nil if no match."
@@ -171,7 +168,7 @@
                          [#"^(?:nov(?:ember)?)"  (months-until :november)  :month]
                          [#"^(?:dec(?:ember)?)"  (months-until :december)  :month]))
 
-(defn tokenize [date-str]
+(defn- tokenize [date-str]
   (lazy-seq
     (let [stream (drop-regex separator date-str)]
       (if (= date-str "") [:second 1]
@@ -190,15 +187,15 @@
                     (:token match)
                     (:number match)))))))))
 
-(defn get-unit [tokens]
+(defn- get-unit [tokens]
   (first-of tokens keyword? :second))
 
-(defn get-time-value [tokens]
+(defn- get-time-value [tokens]
   (let [value (first-of tokens number? 0)]
     (if (= :week (get-unit tokens))
       (* value 7) value)))
 
-(defn get-offset [date-str]
+(defn- get-offset [date-str]
   (if (= date-str "") ;handle special special case
     {:unit Calendar/SECOND :val 0}
     (let [tokens (tokenize date-str)]
@@ -206,33 +203,33 @@
        :val  (get-time-value tokens)})))
 
 ;absolute dates
-(defn get-groups-date [date-str]
+(defn- get-groups-date [date-str]
   (re-find #"(\d{4})-(\d{2})-(\d{2})" (if-val date-str "")))
-(defn get-abs-year [date]
+(defn- get-abs-year [date]
   (Integer. (nth (get-groups-date date) 1 (get-year))))
-(defn get-abs-month [date]
+(defn- get-abs-month [date]
   (dec (Integer. (nth (get-groups-date date) 2
                       (inc (get-month))))))
-(defn get-abs-date [date]
+(defn- get-abs-date [date]
   (Integer. (nth (get-groups-date date) 3 (get-day))))
 
-(defn get-groups-time [time-str]
+(defn- get-groups-time [time-str]
   (re-find #"(\d{1,2})(?:\.|:)(\d{2})((?:\.|:)(\d{2}))?\s*(am|pm)?" time-str))
-(defn pm? [date]
+(defn- pm? [date]
   (if-let [pm (nth (get-groups-time date) 5)]
     (= pm "pm")
     false))
-(defn get-abs-hour [date]
+(defn- get-abs-hour [date]
   (let [hour (Integer. (nth (get-groups-time date) 1))]
     (if (and (pm? date) (< hour 13))
       (+ 12 hour) hour)))
-(defn get-abs-min [date]
+(defn- get-abs-min [date]
   (Integer. (nth (get-groups-time date) 2)))
-(defn get-abs-sec [date]
+(defn- get-abs-sec [date]
   (Integer. (if-val (nth (get-groups-time date) 4)
                     "0")))
 
-(defn get-date [date-str]
+(defn- get-date [date-str]
   (let [matches (re-find #"(\d{4}-\d{2}-\d{2} ?)?(\d{1,2}(?:\.|:)\d{2}((?:\.|:)\d{2})?\s*(am|pm)?)?" date-str)]
     (create-date (get-abs-year  (nth matches 1))
                  (get-abs-month (nth matches 1))

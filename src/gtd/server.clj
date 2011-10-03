@@ -9,68 +9,64 @@
      (java.net InetAddress)
      (java.io BufferedReader InputStreamReader PrintWriter)))
 
-;intended exports:
-  ;start-server
-
 (def *tasks* (atom nil))
 
-(defn format-date [date]
+(defn- format-date [date]
   (.format (SimpleDateFormat. "yyyy-MM-dd HH:mm:ss") date))
 
-(defn print-tasks []
+(defn- print-tasks []
   (doseq [[msg date] @*tasks*]
     (println (str (format-date date)
                   " -- \""
                   (apply str (take 47 (remove #(= \newline %) (trim msg))))
                   "\""))))
 
-(defn list-tasks []
+(defn- list-tasks []
   (if (empty? @*tasks*)
     (println "")
     (do
       (print-tasks)
       (println "."))))
 
-(defn add-task-to-list
+(defn- add-task-to-list
   "Adds this task to the task list keeping it chronologically sorted."
   [msg date]
   (swap! *tasks* 
          (comp (partial sort-by second) conj)
          [msg date]))
 
-(defn remove-first [coll pred]
+(defn- remove-first [coll pred]
   (let [[pre post] (split-with (complement pred) coll)]
     (concat pre (rest post))))
 
-(defn remove-task-from-list
+(defn- remove-task-from-list
   "Remove first task from list with this message."
   [msg]
   (swap! *tasks* remove-first #(= (first %) msg)))
 
-(defn create-window-timer-task [message]
+(defn- create-window-timer-task [message]
   (proxy [TimerTask] []
     (run []
       (create-window message)
       (remove-task-from-list message))))
 
-(defn create-window-timer [request]
+(defn- create-window-timer [request]
   (when-let [msg (:content request)]
     (doto (Timer.)
       (.schedule (create-window-timer-task msg) (:date request)))
     (add-task-to-list msg (:date request))))
 
-(defn get-date-str [line]
+(defn- get-date-str [line]
   (apply str (drop 5 line)))
 
-(defn parse-multi-line [lines]
+(defn- parse-multi-line [lines]
   ;TODO: just assumed it is a task
   (let [request {:date (parse-date (get-date-str (first lines)))
                  :content (join "\n" (rest lines))}]
     (create-window-timer request)
     (println "ACCEPTED")))
 
-(defn handle [in out]
-  ;TODO: unit test this
+(defn- handle [in out]
   (binding
     [*in* (BufferedReader. (InputStreamReader. in))
      *out* (PrintWriter. out)]

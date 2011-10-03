@@ -1,10 +1,7 @@
 (ns gtd.reflow
   (:use [clojure.string :only (split join)]))
 
-;intended exports:
-  ;reflow
-
-(defn last-rest
+(defn- last-rest
   "Returns a seq of pairs made up of splitting the coll in all possible
   places. The pair consists of the last element of the front half and
   the entire back half."
@@ -14,7 +11,7 @@
       (conj (last-rest (rest coll))
             [(first coll) (rest coll)]))))
 
-(defn cum-last-rest
+(defn- cum-last-rest
   "Like last-rest but accumulates the first item in the pair."
   [coll]
   (letfn [(help [acc [[x xs] & ys]]
@@ -24,10 +21,10 @@
                       [(+ acc x) xs]))))]
     (help 0 (last-rest coll))))
 
-(defn sum [coll]
+(defn- sum [coll]
   (reduce + 0 coll))
 
-(defn min-item [f coll]
+(defn- min-item [f coll]
   (let [fs (map f coll)
         min-fs (apply min fs)
         pairs (map #(hash-map :f %1 :val %2) fs coll)]
@@ -36,7 +33,7 @@
 
 ;TODO: is there a more idiomatic way of declaring this memoization?
 (declare parts-mem)
-(defn parts
+(defn- parts
   "Splits coll into n summations of linear partitions maintaining a
   minimal difference across the partitoins."
   [coll n]
@@ -49,7 +46,7 @@
                          (cum-last-rest coll)))))
 (def parts-mem (memoize parts))
 
-(defn front-sum-count
+(defn- front-sum-count
   "How many values from the front of coll are required to sum to x."
   [coll x]
   (loop [coll coll
@@ -59,7 +56,7 @@
       (empty? coll) cnt
       :else (recur (rest coll) (+ acc (first coll)) (inc cnt)))))
 
-(defn takes
+(defn- takes
   "Values should be a 1-to-1 mapping with coll. It is used to divide
   coll according to take-coll. Cumulative values are used."
   [coll values take-coll]
@@ -71,7 +68,7 @@
                      (drop take-cnt values)
                      (rest take-coll)))))))
 
-(defn even-partitions 
+(defn- even-partitions 
   "Breaks coll into n partitions minimising the difference in score as
   calculated by applying f to each element in coll."
   [coll f n]
@@ -79,7 +76,7 @@
         min-part (parts fs n)]
     (takes coll fs min-part)))
 
-(defn words [str-input]
+(defn- words [str-input]
   (split str-input #"\s+"))
 
 (defn reflow
