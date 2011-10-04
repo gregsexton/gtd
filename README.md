@@ -49,8 +49,8 @@ Once the server is running, the Python gtd.py script can be used to send
 notifications to the server. I recommend symlinking to this from
 somewhere in your path. e.g.
 
-> ln -s ~/some/path/to/gtd.py ~/bin/gtd
-> chmod +x ~/bin/gtd
+    ln -s ~/some/path/to/gtd.py ~/bin/gtd
+    chmod +x ~/bin/gtd
 
 Creating a gtd-server script somewhere in your path and adding to it the
 commands you use to start the server is recommended. This allows you to
@@ -70,3 +70,113 @@ GTD.
 * Display a file to someone stood behind you: `cat blah.clj|gtd`.
 * View the bottom of a log from across the room: `tail blah.log|gtd`.
 * See the currently added notifications and when they will be displayed: `gtd --list`.
+
+## Screenshot
+
+Here is an example usage screenshot achieved by using the command `date | gtd`.
+
+![Screenshot of GTD in action.](http://www.gregsexton.org/images/gtd/gtd.jpg)
+
+## Specifying a time-out
+
+Here are some example ways to specify the time-out period. Both relative
+and absolute examples are provided. For a definitive list: at present
+you'll have to look at the code I'm afraid. I would start with the unit
+tests though.
+
+### Relative
+
+<table>
+    <tr>
+        <td>
+            now
+        </td>
+        <td>
+            "now" "-" "." ""
+        </td>
+    </tr>
+    <tr>
+        <td>
+            tomorrow
+        </td>
+        <td>
+            "tomorrow" "1day" "1 day" "day" "a day" "1days" "days1"
+        </td>
+    </tr>
+    <tr>
+        <td>
+            days
+        </td>
+        <td>
+            "xday" "xdays" "dayx" "monday-sunday"
+        </td>
+    </tr>
+    <tr>
+        <td>
+            week
+        </td>
+        <td>
+            "7days" "week" "a week" "next week" "xweek" "xweeks"
+        </td>
+    </tr>
+    <tr>
+        <td>
+            month
+        </td>
+        <td>
+            "month" "a month" "next month" "jan" "january"
+        </td>
+    </tr>
+    <tr>
+        <td>
+            year
+        </td>
+        <td>
+            "year" "a year" "next year"
+        </td>
+    </tr>
+    <tr>
+        <td>
+            secs
+        </td>
+        <td>
+            "xseconds" "xsecond" "xsecs" "xsec" "a second" "second" "sec"
+        </td>
+    </tr>
+    <tr>
+        <td>
+            mins
+        </td>
+        <td>
+            "xminutes" "xminute" "xmins" "xmin" "a minute" "minute" "min"
+        </td>
+    </tr>
+    <tr>
+        <td>
+            hours
+        </td>
+        <td>
+            "xhours" "xhour" "xhr" "xhrs" "a hour" "an hour" "hour" "hr"
+        </td>
+    </tr>
+</table>
+
+### Absolute
+
+* 2011-04-30
+* 2011-04-30 14:32
+* 2011-04-30 14:32:17
+* 2011-04-30 02:32pm
+* 2011-04-30 02:32 pm
+* 2011-04-30 2:32 pm
+* 2011-04-30 02:32:17pm
+* 2011-04-30 02:32:17 pm
+* 2011-04-30 2:32:17 pm
+* 14:32
+* 14:32:17
+* 02:32pm
+* 02:32 pm
+* 2:32 pm
+* 02:32:17pm
+* 02:32:17 pm
+* 2:32:17 pm
