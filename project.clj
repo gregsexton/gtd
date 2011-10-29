@@ -1,4 +1,4 @@
-(defproject gtd "0.1.0"
+(defproject gtd "0.2.0"
   :url "http://www.gregsexton.org/portfolio/gtd-get-things-displayed/"
   :description "gtd -- get things displayed -- is an easy way of
                displaying text in large on your primary screen. It uses

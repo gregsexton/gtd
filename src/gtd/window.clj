@@ -1,9 +1,10 @@
 (ns gtd.window
   (:use [gtd.reflow :only (reflow)])
+  (:use [gtd.date-parser :only (parse-date)])
   (:use [clojure.string :only (split)])
   (:import
      (java.io File)
-     (javax.swing JDialog JLabel Box ImageIcon JScrollPane BorderFactory)
+     (javax.swing JDialog JLabel Box ImageIcon JScrollPane BorderFactory JOptionPane)
      (java.awt.event KeyAdapter KeyEvent MouseAdapter MouseMotionAdapter)
      (com.sun.awt AWTUtilities AWTUtilities$Translucency)
      (java.awt.geom RoundRectangle2D$Double)
@@ -213,12 +214,30 @@
       (create-scaled-image-label img) 
       (create-full-size-image-label img))))
 
+;snooze
+(defn- get-snooze-date [win]
+  (JOptionPane/showInputDialog win
+                               "Please enter a new time specifier for this message."
+                               "Snooze Date"
+                               JOptionPane/PLAIN_MESSAGE))
+
+(defn- snooze [win message]
+  (let [date (get-snooze-date win)]
+    (when date 
+      (let [request {:date (parse-date date)
+                     :content message}]
+        ;this line is to avoid circular dependencies -- bit of a hack
+        ((resolve 'gtd.server/create-window-timer) request)
+        (.dispose win)))))
+
 ;listeners
-(defn- close-window-key-listener [win]
+(defn- window-key-listener [message win]
   (proxy [KeyAdapter] []
     (keyPressed [e]
-      (when (= (.getKeyCode e) KeyEvent/VK_ESCAPE)
-        (.dispose win)))))
+      (let [code (.getKeyCode e)]
+        (cond
+          (= code KeyEvent/VK_ESCAPE) (.dispose win)
+          (= code KeyEvent/VK_S) (snooze win message))))))
 
 (def *initial-point* (atom nil))
 
@@ -238,10 +257,10 @@
                         (+ (.. win getLocation y) y-moved)))))))
 
 (defn- add-win-listeners 
-  ([win]
-   (add-win-listeners win win))
-  ([win top-component]
-   (.addKeyListener win (close-window-key-listener win)) 
+  ([message win]
+   (add-win-listeners message win win))
+  ([message win top-component]
+   (.addKeyListener win (window-key-listener message win)) 
    (.addMouseListener top-component (set-initial-click-listener)) 
    (.addMouseMotionListener top-component (move-window-mouse-listener win))))
 
@@ -297,12 +316,12 @@
 (defn- create-window-with-labels
   "Create a default window, add all the labels, resize, center, add
   listeners and display."
-  [labels]
+  [add-listeners labels]
   (let [win (create-initial-win)
         box (Box/createVerticalBox)
         scroll (create-win-scrollpane box)
         lbl-count (count labels)]
-    (add-win-listeners win scroll)
+    (add-listeners win scroll)
     (.add win scroll)
     (.add box (Box/createVerticalGlue))
     (doseq [lbl labels]
@@ -317,9 +336,9 @@
 (defn- create-window-with-image
   "Create a default window, add an image label, resize, center, add
   listeners and display."
-  [file-path]
+  [add-listeners file-path]
   (let [win (create-initial-win)]
-    (add-win-listeners win)
+    (add-listeners win)
     (.add win (create-image-label file-path))
     (.validate win)
     (size-window win win) ;specify the win as the layout-manager
@@ -329,9 +348,10 @@
 ;public interface
 (defn create-window [message]
   "Create the window displaying the message."
-  (if (is-image? message)
-    (-> message create-window-with-image)
-    (-> message expand-tabs lines create-labels create-window-with-labels)))
+  (let [add-listeners (partial add-win-listeners message)]
+    (if (is-image? message)
+      (create-window-with-image add-listeners message)
+      (create-window-with-labels add-listeners (-> message expand-tabs lines create-labels)))))
 
 ;integration tests
 (defn- integration-tests []
