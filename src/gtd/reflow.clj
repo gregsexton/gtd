@@ -68,7 +68,7 @@
                      (drop take-cnt values)
                      (rest take-coll)))))))
 
-(defn- even-partitions 
+(defn- even-partitions
   "Breaks coll into n partitions minimising the difference in score as
   calculated by applying f to each element in coll."
   [coll f n]

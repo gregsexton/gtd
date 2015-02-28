@@ -362,5 +362,4 @@
   ;breaks and center justifies:
   (create-window "This is a really long sentence that should wrap and display in a smaller font. This is a really long sentence that should wrap and display in a smaller font.")
   ;realises full width but doesn't break:
-  (create-window "07590 719599")
-  )
+  (create-window "07590 719599"))

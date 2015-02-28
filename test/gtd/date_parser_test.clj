@@ -1,10 +1,10 @@
-(ns gtd.test.date-parser
+(ns gtd.date-parser-test
+  (:use clojure.test)
   (:use gtd.date-parser)
-  (:use clojure.contrib.test-is)
   (import (java.util Calendar GregorianCalendar)))
 
-;TODO: test case insensitivity
-;TODO: parse error handling -- shouldn't explode!
+;;TODO: test case insensitivity
+;;TODO: parse error handling -- shouldn't explode!
 
 (deftest absolute-absvals-return-true
   (is (true? (absolute? "2011-04-30")))

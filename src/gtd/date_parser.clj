@@ -1,11 +1,8 @@
 (ns gtd.date-parser
-  (:use [clojure.string :only (trim)])
-  (:use [clojure.contrib.cond])
-  (:require [clojure.contrib.string :as s])
-  (:import
-     (java.util Calendar GregorianCalendar)))
+  (:require [clojure.string :as str :refer (trim)])
+  (:import (java.util Calendar GregorianCalendar)))
 
-;date utilities
+                                        ;date utilities
 (defn create-date [year month date hour minute sec]
   (let [cal (GregorianCalendar.)]
     (.set cal year month date hour minute sec)
@@ -95,7 +92,7 @@
   the regex starts with '^'. Returns nil if no match."
   [regex string]
   (if-let [match (re-find regex string)]
-    [match (s/drop (count match) string)]))
+    [match (subs string (count match))]))
 
 (defn- drop-regex [regex string]
   (if-let [[match tail] (split-regex regex string)]
